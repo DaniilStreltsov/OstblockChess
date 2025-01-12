@@ -9,42 +9,17 @@ SQ_SIZE = BOARD_HEIGHT // DIMENSION
 MAX_FPS = 15
 IMAGES = {}
 
-# Add these constants after your existing constants
+
 BUTTON_WIDTH = 100
 BUTTON_HEIGHT = 40
 BUTTON_MARGIN = 10
 BUTTON_COLOR = (119, 153, 82)
 BUTTON_TEXT_COLOR = (255, 255, 255)
 
-
-
-# Define colors
-
-# 1 Green
-
 LIGHT_SQUARE_COLOR = (237, 238, 209)
 DARK_SQUARE_COLOR = (119, 153, 82)
 MOVE_HIGHLIGHT_COLOR = (84, 115, 161)
 POSSIBLE_MOVE_COLOR = (255, 255, 51)
-
-# 2 Brown
-
-'''
-LIGHT_SQUARE_COLOR = (240, 217, 181)
-DARK_SQUARE_COLOR = (181, 136, 99)
-MOVE_HIGHLIGHT_COLOR = (84, 115, 161)
-POSSIBLE_MOVE_COLOR = (255, 255, 51)
-'''
-
-# 3 Gray
-
-'''
-LIGHT_SQUARE_COLOR = (220,220,220)
-DARK_SQUARE_COLOR = (170,170,170)
-MOVE_HIGHLIGHT_COLOR = (84, 115, 161)
-POSSIBLE_MOVE_COLOR = (164,184,196)
-'''
-
 
 def loadImages():
     pieces = ['bR', 'bN', 'bB', 'bQ', 'bK',
@@ -52,7 +27,6 @@ def loadImages():
     for piece in pieces:
         image_path = "images1/" + piece + ".png"
         original_image = p.image.load(image_path)
-        # p.transform.smoothscale is bit slower than p.transform.scale, using this to reduce pixelation and better visual quality for scaling images to larger sizes
         IMAGES[piece] = p.transform.smoothscale(
             original_image, (SQ_SIZE, SQ_SIZE))
 
@@ -93,8 +67,67 @@ def drawPieces(screen, board):
             if piece != "--":
                 screen.blit(IMAGES[piece], p.Rect(
                     col * SQ_SIZE, row * SQ_SIZE, SQ_SIZE, SQ_SIZE))
+                
+def pawnPromotionPopup(screen, gs):
+    font = p.font.SysFont("Times New Roman", 30, False, False)
+    text = font.render("Choose promotion:", True, p.Color("black"))
 
+    # Create buttons for promotion choices with images
+    button_width, button_height = 100, 100
+    buttons = [
+        p.Rect(100, 200, button_width, button_height),
+        p.Rect(200, 200, button_width, button_height),
+        p.Rect(300, 200, button_width, button_height),
+        p.Rect(400, 200, button_width, button_height)
+    ]
 
-# if we import main then main function wont run it will run only while running this file
+    if gs.whiteToMove:
+        button_images = [
+            p.transform.smoothscale(p.image.load(
+                "images1/bQ.png"), (100, 100)),
+            p.transform.smoothscale(p.image.load(
+                "images1/bR.png"), (100, 100)),
+            p.transform.smoothscale(p.image.load(
+                "images1/bB.png"), (100, 100)),
+            p.transform.smoothscale(p.image.load("images1/bN.png"), (100, 100))
+        ]
+    else:
+        button_images = [
+            p.transform.smoothscale(p.image.load(
+                "images1/wQ.png"), (100, 100)),
+            p.transform.smoothscale(p.image.load(
+                "images1/wR.png"), (100, 100)),
+            p.transform.smoothscale(p.image.load(
+                "images1/wB.png"), (100, 100)),
+            p.transform.smoothscale(p.image.load("images1/wN.png"), (100, 100))
+        ]
+
+    while True:
+        for e in p.event.get():
+            if e.type == p.QUIT:
+                p.quit()
+                sys.exit()
+            elif e.type == p.MOUSEBUTTONDOWN:
+                mouse_pos = e.pos
+                for i, button in enumerate(buttons):
+                    if button.collidepoint(mouse_pos):
+                        if i == 0:
+                            return "Q"  # Queen
+                        elif i == 1:
+                            return "R" # Rook
+                        elif i == 2:
+                            return "B" # Bishop
+                        else:
+                            return "N" # Knight
+
+        screen.fill(p.Color(LIGHT_SQUARE_COLOR))
+        screen.blit(text, (110, 150))
+
+        for i, button in enumerate(buttons):
+            p.draw.rect(screen, p.Color("white"), button)
+            screen.blit(button_images[i], button.topleft)
+
+        p.display.flip()
+
 if __name__ == "__main__":
     main()
