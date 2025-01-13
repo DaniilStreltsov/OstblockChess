@@ -1,5 +1,6 @@
 import sys
 import pygame as p
+from engine import GameState, Move
 
 BOARD_WIDTH = BOARD_HEIGHT = 512
 MOVE_LOG_PANEL_WIDTH = 250
@@ -95,13 +96,22 @@ def main():
     p.init()
     screen = p.display.set_mode((BOARD_WIDTH + MOVE_LOG_PANEL_WIDTH, BOARD_HEIGHT))
     clock = p.time.Clock()
+        
+    # Set up game based on menu choices
+    gs = GameState()
+    if gs.playerWantsToPlayAsBlack:
+        gs.board = gs.board1
+        
+    
 
     screen.fill(p.Color(LIGHT_SQUARE_COLOR))
     moveLogFont = p.font.SysFont("Times New Roman", 12, False, False)
-
-    screen.fill(p.Color(LIGHT_SQUARE_COLOR))
-    moveLogFont = p.font.SysFont("Times New Roman", 12, False, False)
+    # Creating gamestate object calling our constructor
+    gs = GameState()
+    if (gs.playerWantsToPlayAsBlack):
+        gs.board = gs.board1
     # if a user makes a move we can ckeck if its in the list of valid moves
+    validMoves = gs.getValidMoves()
     moveMade = False  # if user makes a valid moves and the gamestate changes then we should generate new set of valid move
     animate = False  # flag var for when we should animate a move
     loadImages()
@@ -118,25 +128,122 @@ def main():
     previousPos = ""
     countMovesForDraw = 0
     COUNT_DRAW = 0
-    board = [
-        ["bR", "bN", "bB", "bQ", "bK", "bB", "bN", "bR"],
-        ["bp", "bp", "bp", "bp", "bp", "bp", "bp", "bp"],
-        ["--", "--", "--", "--", "--", "--", "--", "--"],
-        ["--", "--", "--", "--", "--", "--", "--", "--"],
-        ["--", "--", "--", "--", "--", "--", "--", "--"],
-        ["--", "--", "--", "--", "--", "--", "--", "--"],
-        ["wp", "wp", "wp", "wp", "wp", "wp", "wp", "wp"],
-        ["wR", "wN", "wB", "wQ", "wK", "wB", "wN", "wR"]
-    ]
     while running:
         for e in p.event.get():
             if e.type == p.QUIT:
                 running = False
+            # Mouse Handler
+            elif e.type == p.MOUSEBUTTONDOWN:
+                if not gameOver:
+                    location = p.mouse.get_pos()
+                    col = location[0]//SQ_SIZE  # Get column from x coordinate
+                    row = location[1]//SQ_SIZE  # Get row from y coordinate
+                    
+                    # Get button rectangles
+                    undo_button, restart_button = drawButtons(screen)
+                    
+                    # Check if buttons were clicked
+                    if undo_button.collidepoint(location):
+                        gs.undoMove()
+                        moveMade = True
+                        animate = False
+                        gameOver = False
+                        if AIThinking:
+                            moveFinderProcess.terminate()
+                            AIThinking = False
+                        moveUndone = True
+                        
+                    # Find the restart button handler section and modify it:
 
-        drawPieces(screen, board)
+                    elif restart_button.collidepoint(location):
+                        # Reset everything and show menu
+                        screen.fill(p.Color(LIGHT_SQUARE_COLOR))
+                            
+                        # Reset game state
+                        gs = GameState()
+                        if gs.playerWantsToPlayAsBlack:
+                            gs.board = gs.board1
+                                
+                        validMoves = gs.getValidMoves()
+                        squareSelected = ()
+                        playerClicks = []
+                        moveMade = False
+                        animate = False
+                        gameOver = False
+                        if AIThinking:
+                            moveFinderProcess.terminate()
+                            AIThinking = False
+                        moveUndone = True
+                        continue
+                    
+                    # if user clicked on same square twice or user click outside board
+                    if squareSelected == (row, col) or col >= 8:
+                        squareSelected = ()  # deselect
+                        playerClicks = []  # clear player clicks
+                    else:
+                        squareSelected = (row, col)
+                        # append player both clicks (place and destination)
+                        playerClicks.append(squareSelected)
+
+            # Key Handler
+            elif e.type == p.KEYDOWN:
+                if e.key == p.K_z:  # undo when z is pressed
+                    gs.undoMove()
+                    # when user undo move valid move change, here we could use [ validMoves = gs.getValidMoves() ] which would update the current validMoves after undo
+                    moveMade = True
+                    animate = False
+                    gameOver = False
+                    if AIThinking:
+                        moveFinderProcess.terminate()  # terminate the ai thinking if we undo
+                        AIThinking = False
+                    moveUndone = True
+                if e.key == p.K_r:  # reset board when 'r' is pressed
+                    gs = GameState()
+                    validMoves = gs.getValidMoves()
+                    squareSelected = ()
+                    playerClicks = []
+                    moveMade = False
+                    animate = False
+                    gameOver = False
+                    if AIThinking:
+                        moveFinderProcess.terminate()  # terminate the ai thinking if we undo
+                        AIThinking = False
+                    moveUndone = True
+
+        if moveMade:
+            if countMovesForDraw == 0 or countMovesForDraw == 1 or countMovesForDraw == 2 or countMovesForDraw == 3:
+                countMovesForDraw += 1
+            if countMovesForDraw == 4:
+                positionHistory += gs.getBoardString()
+                if previousPos == positionHistory:
+                    COUNT_DRAW += 1
+                    positionHistory = ""
+                    countMovesForDraw = 0
+                else:
+                    previousPos = positionHistory
+                    positionHistory = ""
+                    countMovesForDraw = 0
+                    COUNT_DRAW = 0
+            # genetare new set of valid move if valid move is made
+            validMoves = gs.getValidMoves()
+            moveMade = False
+            animate = False
+            moveUndone = False
+
+        undo_button, restart_button = drawGameState(screen, gs, validMoves, squareSelected, moveLogFont)
+
+        if COUNT_DRAW == 1:
+            gameOver = True
+            text = 'Draw due to repetition'
+        if gs.stalemate:
+            gameOver = True
+            text = 'Stalemate'
+        elif gs.checkmate:
+            gameOver = True
+            text = 'Black wins by checkmate' if gs.whiteToMove else 'White wins by checkmate'
+
         clock.tick(MAX_FPS)
         p.display.flip()
-
 
 def drawGameState(screen, gs, validMoves, squareSelected, moveLogFont):
     drawSquare(screen)  # draw square on board
