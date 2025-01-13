@@ -252,7 +252,6 @@ def drawGameState(screen, gs, validMoves, squareSelected, moveLogFont):
     drawMoveLog(screen, gs, moveLogFont)
     return drawButtons(screen)  # Add this line
 
-
 def drawSquare(screen):
     global colors
     colors = [p.Color(LIGHT_SQUARE_COLOR), p.Color(DARK_SQUARE_COLOR)]
@@ -261,7 +260,6 @@ def drawSquare(screen):
             color = colors[((row + col) % 2)]
             p.draw.rect(screen, color, p.Rect(
                 col * SQ_SIZE, row * SQ_SIZE, SQ_SIZE, SQ_SIZE))
-
 
 def highlightSquares(screen, gs, validMoves, squareSelected):
     if squareSelected != ():  # make sure there is a square to select
@@ -280,7 +278,6 @@ def highlightSquares(screen, gs, validMoves, squareSelected):
             for move in validMoves:
                 if move.startRow == row and move.startCol == col:
                     screen.blit(s, (move.endCol*SQ_SIZE, move.endRow*SQ_SIZE))
-
 
 def drawPieces(screen, board):
     for row in range(DIMENSION):
