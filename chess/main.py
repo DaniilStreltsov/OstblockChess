@@ -31,6 +31,44 @@ def loadImages():
         IMAGES[piece] = p.transform.smoothscale(
             original_image, (SQ_SIZE, SQ_SIZE))
 
+def main():
+    p.init()
+    screen = p.display.set_mode((BOARD_WIDTH + MOVE_LOG_PANEL_WIDTH, BOARD_HEIGHT))
+    clock = p.time.Clock()
+
+    screen.fill(p.Color(LIGHT_SQUARE_COLOR))
+    moveLogFont = p.font.SysFont("Times New Roman", 12, False, False)
+    
+    loadImages()
+    running = True
+    board = [
+        ["bR", "bN", "bB", "bQ", "bK", "bB", "bN", "bR"],
+        ["bp", "bp", "bp", "bp", "bp", "bp", "bp", "bp"],
+        ["--", "--", "--", "--", "--", "--", "--", "--"],
+        ["--", "--", "--", "--", "--", "--", "--", "--"],
+        ["--", "--", "--", "--", "--", "--", "--", "--"],
+        ["--", "--", "--", "--", "--", "--", "--", "--"],
+        ["wp", "wp", "wp", "wp", "wp", "wp", "wp", "wp"],
+        ["wR", "wN", "wB", "wQ", "wK", "wB", "wN", "wR"]
+    ]
+    while running:
+        for e in p.event.get():
+            if e.type == p.QUIT:
+                running = False
+
+        drawPieces(screen, board)
+        clock.tick(MAX_FPS)
+        p.display.flip()
+
+
+def drawPieces(screen, board):
+    for row in range(DIMENSION):
+        for col in range(DIMENSION):
+            piece = board[row][col]
+            if piece != "--":
+                screen.blit(IMAGES[piece], p.Rect(
+                    col * SQ_SIZE, row * SQ_SIZE, SQ_SIZE, SQ_SIZE))
+                
 def pawnPromotionPopup(screen, gs):
     font = p.font.SysFont("Times New Roman", 30, False, False)
     text = font.render("Choose promotion:", True, p.Color("black"))
