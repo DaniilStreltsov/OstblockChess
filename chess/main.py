@@ -37,26 +37,9 @@ def main():
 
     screen.fill(p.Color(LIGHT_SQUARE_COLOR))
     moveLogFont = p.font.SysFont("Times New Roman", 12, False, False)
-
-    screen.fill(p.Color(LIGHT_SQUARE_COLOR))
-    moveLogFont = p.font.SysFont("Times New Roman", 12, False, False)
-    # if a user makes a move we can ckeck if its in the list of valid moves
-    moveMade = False  # if user makes a valid moves and the gamestate changes then we should generate new set of valid move
-    animate = False  # flag var for when we should animate a move
+    
     loadImages()
     running = True
-    squareSelected = ()  # keep tracks of last click
-    # clicking to own piece and location where to move[(6,6),(4,4)]
-    playerClicks = []
-    gameOver = False  # gameover if checkmate or stalemate
-    AIThinking = False  # True if ai is thinking
-    moveFinderProcess = None
-    moveUndone = False
-    pieceCaptured = False
-    positionHistory = ""
-    previousPos = ""
-    countMovesForDraw = 0
-    COUNT_DRAW = 0
     board = [
         ["bR", "bN", "bB", "bQ", "bK", "bB", "bN", "bR"],
         ["bp", "bp", "bp", "bp", "bp", "bp", "bp", "bp"],
