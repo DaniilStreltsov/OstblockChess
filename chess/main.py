@@ -73,7 +73,6 @@ def pawnPromotionPopup(screen, gs):
     font = p.font.SysFont("Times New Roman", 30, False, False)
     text = font.render("Choose promotion:", True, p.Color("black"))
 
-    # Create buttons for promotion choices with images
     button_width, button_height = 100, 100
     buttons = [
         p.Rect(100, 200, button_width, button_height),
@@ -135,30 +134,24 @@ def main():
     screen = p.display.set_mode((BOARD_WIDTH + MOVE_LOG_PANEL_WIDTH, BOARD_HEIGHT))
     clock = p.time.Clock()
         
-    # Set up game based on menu choices
     gs = GameState()
     if gs.playerWantsToPlayAsBlack:
         gs.board = gs.board1
-        
-    
 
     screen.fill(p.Color(LIGHT_SQUARE_COLOR))
     moveLogFont = p.font.SysFont("Times New Roman", 12, False, False)
-    # Creating gamestate object calling our constructor
     gs = GameState()
     if (gs.playerWantsToPlayAsBlack):
         gs.board = gs.board1
-    # if a user makes a move we can ckeck if its in the list of valid moves
     validMoves = gs.getValidMoves()
-    moveMade = False  # if user makes a valid moves and the gamestate changes then we should generate new set of valid move
-    animate = False  # flag var for when we should animate a move
+    moveMade = False 
+    animate = False  
     loadImages()
     running = True
-    squareSelected = ()  # keep tracks of last click
-    # clicking to own piece and location where to move[(6,6),(4,4)]
+    squareSelected = ()  
     playerClicks = []
-    gameOver = False  # gameover if checkmate or stalemate
-    AIThinking = False  # True if ai is thinking
+    gameOver = False 
+    AIThinking = False  
     moveFinderProcess = None
     moveUndone = False
     pieceCaptured = False
@@ -170,17 +163,14 @@ def main():
         for e in p.event.get():
             if e.type == p.QUIT:
                 running = False
-            # Mouse Handler
             elif e.type == p.MOUSEBUTTONDOWN:
                 if not gameOver:
                     location = p.mouse.get_pos()
-                    col = location[0]//SQ_SIZE  # Get column from x coordinate
-                    row = location[1]//SQ_SIZE  # Get row from y coordinate
+                    col = location[0]//SQ_SIZE 
+                    row = location[1]//SQ_SIZE
                     
-                    # Get button rectangles
                     undo_button, restart_button = drawButtons(screen)
                     
-                    # Check if buttons were clicked
                     if undo_button.collidepoint(location):
                         gs.undoMove()
                         moveMade = True
@@ -190,14 +180,10 @@ def main():
                             moveFinderProcess.terminate()
                             AIThinking = False
                         moveUndone = True
-                        
-                    # Find the restart button handler section and modify it:
 
                     elif restart_button.collidepoint(location):
-                        # Reset everything and show menu
                         screen.fill(p.Color(LIGHT_SQUARE_COLOR))
                             
-                        # Reset game state
                         gs = GameState()
                         if gs.playerWantsToPlayAsBlack:
                             gs.board = gs.board1
@@ -214,28 +200,26 @@ def main():
                         moveUndone = True
                         continue
                     
-                    # if user clicked on same square twice or user click outside board
                     if squareSelected == (row, col) or col >= 8:
-                        squareSelected = ()  # deselect
-                        playerClicks = []  # clear player clicks
+                        squareSelected = () 
+                        playerClicks = []  
                     else:
                         squareSelected = (row, col)
-                        # append player both clicks (place and destination)
                         playerClicks.append(squareSelected)
+                        if not moveMade:
+                            playerClicks = [squareSelected]
 
-            # Key Handler
             elif e.type == p.KEYDOWN:
-                if e.key == p.K_z:  # undo when z is pressed
+                if e.key == p.K_z:  
                     gs.undoMove()
-                    # when user undo move valid move change, here we could use [ validMoves = gs.getValidMoves() ] which would update the current validMoves after undo
                     moveMade = True
                     animate = False
                     gameOver = False
                     if AIThinking:
-                        moveFinderProcess.terminate()  # terminate the ai thinking if we undo
+                        moveFinderProcess.terminate()  
                         AIThinking = False
                     moveUndone = True
-                if e.key == p.K_r:  # reset board when 'r' is pressed
+                if e.key == p.K_r: 
                     gs = GameState()
                     validMoves = gs.getValidMoves()
                     squareSelected = ()
@@ -244,7 +228,7 @@ def main():
                     animate = False
                     gameOver = False
                     if AIThinking:
-                        moveFinderProcess.terminate()  # terminate the ai thinking if we undo
+                        moveFinderProcess.terminate()  
                         AIThinking = False
                     moveUndone = True
 
@@ -262,7 +246,8 @@ def main():
                     positionHistory = ""
                     countMovesForDraw = 0
                     COUNT_DRAW = 0
-            # genetare new set of valid move if valid move is made
+            if animate:
+                animateMove(gs.moveLog[-1], screen, gs.board, clock)
             validMoves = gs.getValidMoves()
             moveMade = False
             animate = False
@@ -273,22 +258,25 @@ def main():
         if COUNT_DRAW == 1:
             gameOver = True
             text = 'Draw due to repetition'
+            drawEndGameText(screen, text)
         if gs.stalemate:
             gameOver = True
             text = 'Stalemate'
+            drawEndGameText(screen, text)
         elif gs.checkmate:
             gameOver = True
             text = 'Black wins by checkmate' if gs.whiteToMove else 'White wins by checkmate'
+            drawEndGameText(screen, text)
 
         clock.tick(MAX_FPS)
         p.display.flip()
 
 def drawGameState(screen, gs, validMoves, squareSelected, moveLogFont):
-    drawSquare(screen)  # draw square on board
+    drawSquare(screen) 
     highlightSquares(screen, gs, validMoves, squareSelected)
     drawPieces(screen, gs.board)
     drawMoveLog(screen, gs, moveLogFont)
-    return drawButtons(screen)  # Add this line
+    return drawButtons(screen)  
 
 def drawSquare(screen):
     global colors
@@ -300,18 +288,13 @@ def drawSquare(screen):
                 col * SQ_SIZE, row * SQ_SIZE, SQ_SIZE, SQ_SIZE))
 
 def highlightSquares(screen, gs, validMoves, squareSelected):
-    if squareSelected != ():  # make sure there is a square to select
+    if squareSelected != (): 
         row, col = squareSelected
-        # make sure they click there own piece
         if gs.board[row][col][0] == ('w' if gs.whiteToMove else 'b'):
-            # highlight selected piece square
-            # Surface in pygame used to add images or transperency feature
             s = p.Surface((SQ_SIZE, SQ_SIZE))
-            # set_alpha --> transperancy value (0 transparent)
             s.set_alpha(100)
             s.fill(p.Color(MOVE_HIGHLIGHT_COLOR))
             screen.blit(s, (col*SQ_SIZE, row*SQ_SIZE))
-            # highlighting valid square
             s.fill(p.Color(POSSIBLE_MOVE_COLOR))
             for move in validMoves:
                 if move.startRow == row and move.startCol == col:
@@ -326,7 +309,6 @@ def drawPieces(screen, board):
                     col * SQ_SIZE, row * SQ_SIZE, SQ_SIZE, SQ_SIZE))
 
 def drawMoveLog(screen, gs, font):
-    # rectangle
     moveLogRect = p.Rect(
         BOARD_WIDTH, 0, MOVE_LOG_PANEL_WIDTH, MOVE_LOG_PANEL_HEIGHT)
     p.draw.rect(screen, p.Color(LIGHT_SQUARE_COLOR), moveLogRect)
@@ -340,8 +322,8 @@ def drawMoveLog(screen, gs, font):
         moveTexts.append(moveString)
 
     movesPerRow = 3
-    padding = 10  # Increase padding for better readability
-    lineSpacing = 5  # Increase line spacing for better separation
+    padding = 10
+    lineSpacing = 5
     textY = padding
 
     for i in range(0, len(moveTexts), movesPerRow):
@@ -352,21 +334,64 @@ def drawMoveLog(screen, gs, font):
 
         textObject = font.render(text, True, p.Color('black'))
 
-        # Adjust text location based on padding and line spacing
         textLocation = moveLogRect.move(padding, textY)
         screen.blit(textObject, textLocation)
 
-        # Update Y coordinate for the next line with increased line spacing
         textY += textObject.get_height() + lineSpacing
 
+def animateMove(move, screen, board, clock):
+    global colors
+    deltaRow = move.endRow - move.startRow
+    deltaCol = move.endCol - move.startCol
+    framesPerSquare = 5
+    frameCount = (abs(deltaRow) + abs(deltaCol)) * framesPerSquare
+    for frame in range(frameCount + 1):
+        row, col = ((move.startRow + deltaRow*frame/frameCount, move.startCol +
+                    deltaCol*frame/frameCount)) 
+        drawSquare(screen)
+        drawPieces(screen, board)
+
+        color = colors[(move.endRow + move.endCol) %
+                       2]
+        endSquare = p.Rect(move.endCol*SQ_SIZE, move.endRow *
+                           SQ_SIZE, SQ_SIZE, SQ_SIZE)
+        p.draw.rect(screen, color, endSquare)
+
+        if move.pieceCaptured != '--':
+            if move.isEnpassantMove:
+                enPassantRow = move.endRow + \
+                    1 if move.pieceCaptured[0] == 'b' else move.endRow - 1
+                endSquare = p.Rect(move.endCol*SQ_SIZE, enPassantRow *
+                                   SQ_SIZE, SQ_SIZE, SQ_SIZE) 
+            screen.blit(IMAGES[move.pieceCaptured], endSquare)
+
+        screen.blit(IMAGES[move.pieceMoved], p.Rect(
+            col*SQ_SIZE, row*SQ_SIZE, SQ_SIZE, SQ_SIZE))
+
+        p.display.flip()
+        clock.tick(240)
+
+def drawEndGameText(screen, text):
+    font = p.font.SysFont("Times New Roman", 30, False, False)
+    textObject = font.render(text, True, p.Color('black'))
+
+    text_width = textObject.get_width()
+    text_height = textObject.get_height()
+
+    textLocation = p.Rect(0, 0, BOARD_WIDTH, BOARD_HEIGHT).move(
+        BOARD_WIDTH/2 - text_width/2, BOARD_HEIGHT/2 - text_height/2)
+
+    screen.blit(textObject, textLocation)
+
+    textObject = font.render(text, 0, p.Color('Black'))
+    screen.blit(textObject, textLocation.move(1, 1))
+
 def drawButtons(screen):
-    # Button colors
     normal_color = BUTTON_COLOR
-    hover_color = (82, 110, 57)  # Darker green
+    hover_color = (82, 110, 57)  
     
     mouse_pos = p.mouse.get_pos()
     
-    # Create buttons with hover detection
     undo_button = p.Rect(
         BOARD_WIDTH + MOVE_LOG_PANEL_WIDTH - (BUTTON_WIDTH * 2 + BUTTON_MARGIN), 
         BOARD_HEIGHT - (BUTTON_HEIGHT + BUTTON_MARGIN),
@@ -381,26 +406,21 @@ def drawButtons(screen):
         BUTTON_HEIGHT
     )
     
-    # Draw buttons with hover effect
     undo_color = hover_color if undo_button.collidepoint(mouse_pos) else normal_color
     restart_color = hover_color if restart_button.collidepoint(mouse_pos) else normal_color
     
-    # Draw buttons with rounded corners
     p.draw.rect(screen, undo_color, undo_button, border_radius=10)
     p.draw.rect(screen, restart_color, restart_button, border_radius=10)
     
-    # Add text
     font = p.font.SysFont("Times New Roman", 20, False, False)
     undo_text = font.render("Undo", True, BUTTON_TEXT_COLOR)
     restart_text = font.render("Restart", True, BUTTON_TEXT_COLOR)
     
-    # Add animation effect when hovering
     if undo_button.collidepoint(mouse_pos):
         undo_button.y -= 2
     if restart_button.collidepoint(mouse_pos):
         restart_button.y -= 2
     
-    # Center text
     screen.blit(undo_text, (
         undo_button.centerx - undo_text.get_width()//2,
         undo_button.centery - undo_text.get_height()//2
