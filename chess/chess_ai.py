@@ -53,3 +53,59 @@ def findBestMove(gs, validMoves, returnQueue):
             if move.getChessNotation() == book_move: returnQueue.put(move);return
     findMoveNegaMaxAlphaBeta(gs, validMoves, DEPTH, -CHECKMATE, CHECKMATE, SET_WHITE_AS_BOT)
     returnQueue.put(nextMove)
+
+
+def scoreBoard(gs):
+    if gs.checkmate:
+        if gs.whiteToMove:
+            gs.checkmate = False
+            return -CHECKMATE
+        else:
+            gs.checkmate = False
+            return CHECKMATE
+    elif gs.stalemate:
+        return STALEMATE
+    score = 0
+    for row in range(len(gs.board)):
+        for col in range(len(gs.board[row])):
+            square = gs.board[row][col]
+            if square != "--":
+                piecePositionScore = 0
+                if square[1] != "K":
+                    if square[1] == "p":
+                        piecePositionScore = piecePositionScores[square][row][col]
+                    else:
+                        piecePositionScore = piecePositionScores[square[1]][row][col]
+                if SET_WHITE_AS_BOT:
+                    if square[0] == "w":
+                        score += pieceScore[square[1]] + piecePositionScore * 0.1
+                    elif square[0] == "b":
+                        score -= pieceScore[square[1]] + piecePositionScore * 0.1
+                else:
+                    if square[0] == "w":
+                        score -= pieceScore[square[1]] + piecePositionScore * 0.1
+                    elif square[0] == "b":
+                        score += pieceScore[square[1]] + piecePositionScore * 0.1
+    return score
+
+
+def findMoveNegaMaxAlphaBeta(gs, validMoves, depth, alpha, beta, turnMultiplier):
+    global nextMove
+    if depth == 0:
+        return turnMultiplier * scoreBoard(gs)
+    maxScore = -CHECKMATE
+    for move in validMoves:
+        gs.makeMove(move)
+        nextMoves = gs.getValidMoves()
+        score = -findMoveNegaMaxAlphaBeta(gs, nextMoves, depth - 1, -beta, -alpha, -turnMultiplier)
+        if score > maxScore:
+            maxScore = score
+            if depth == DEPTH:
+                nextMove = move
+                print(move, score)
+        gs.undoMove()
+        if maxScore > alpha:
+            alpha = maxScore
+        if alpha >= beta:
+            break
+    return maxScore
