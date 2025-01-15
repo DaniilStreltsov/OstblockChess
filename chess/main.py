@@ -1,6 +1,15 @@
 import sys
 import pygame as p
 from engine import GameState, Move
+from chess_ai import findRandomMoves, findBestMove
+from multiprocessing import Process, Queue
+from menu import ChessMenu
+
+p.mixer.init()
+
+move_sound = p.mixer.Sound("sounds/move-sound.mp3")
+capture_sound = p.mixer.Sound("sounds/capture.mp3")
+promote_sound = p.mixer.Sound("sounds/promote.mp3")
 
 BOARD_WIDTH = BOARD_HEIGHT = 512
 MOVE_LOG_PANEL_WIDTH = 250
@@ -10,12 +19,16 @@ SQ_SIZE = BOARD_HEIGHT // DIMENSION
 MAX_FPS = 15
 IMAGES = {}
 
-
 BUTTON_WIDTH = 100
 BUTTON_HEIGHT = 40
 BUTTON_MARGIN = 10
 BUTTON_COLOR = (119, 153, 82)
 BUTTON_TEXT_COLOR = (255, 255, 255)
+
+global SET_WHITE_AS_BOT, SET_BLACK_AS_BOT, DEPTH
+
+SET_WHITE_AS_BOT = False
+SET_BLACK_AS_BOT = True
 
 LIGHT_SQUARE_COLOR = (237, 238, 209)
 DARK_SQUARE_COLOR = (119, 153, 82)
@@ -31,44 +44,7 @@ def loadImages():
         IMAGES[piece] = p.transform.smoothscale(
             original_image, (SQ_SIZE, SQ_SIZE))
 
-def main():
-    p.init()
-    screen = p.display.set_mode((BOARD_WIDTH + MOVE_LOG_PANEL_WIDTH, BOARD_HEIGHT))
-    clock = p.time.Clock()
 
-    screen.fill(p.Color(LIGHT_SQUARE_COLOR))
-    moveLogFont = p.font.SysFont("Times New Roman", 12, False, False)
-    
-    loadImages()
-    running = True
-    board = [
-        ["bR", "bN", "bB", "bQ", "bK", "bB", "bN", "bR"],
-        ["bp", "bp", "bp", "bp", "bp", "bp", "bp", "bp"],
-        ["--", "--", "--", "--", "--", "--", "--", "--"],
-        ["--", "--", "--", "--", "--", "--", "--", "--"],
-        ["--", "--", "--", "--", "--", "--", "--", "--"],
-        ["--", "--", "--", "--", "--", "--", "--", "--"],
-        ["wp", "wp", "wp", "wp", "wp", "wp", "wp", "wp"],
-        ["wR", "wN", "wB", "wQ", "wK", "wB", "wN", "wR"]
-    ]
-    while running:
-        for e in p.event.get():
-            if e.type == p.QUIT:
-                running = False
-
-        drawPieces(screen, board)
-        clock.tick(MAX_FPS)
-        p.display.flip()
-
-
-def drawPieces(screen, board):
-    for row in range(DIMENSION):
-        for col in range(DIMENSION):
-            piece = board[row][col]
-            if piece != "--":
-                screen.blit(IMAGES[piece], p.Rect(
-                    col * SQ_SIZE, row * SQ_SIZE, SQ_SIZE, SQ_SIZE))
-                
 def pawnPromotionPopup(screen, gs):
     font = p.font.SysFont("Times New Roman", 30, False, False)
     text = font.render("Choose promotion:", True, p.Color("black"))
@@ -112,13 +88,13 @@ def pawnPromotionPopup(screen, gs):
                 for i, button in enumerate(buttons):
                     if button.collidepoint(mouse_pos):
                         if i == 0:
-                            return "Q"  # Queen
+                            return "Q" 
                         elif i == 1:
-                            return "R" # Rook
+                            return "R"
                         elif i == 2:
-                            return "B" # Bishop
+                            return "B"
                         else:
-                            return "N" # Knight
+                            return "N"
 
         screen.fill(p.Color(LIGHT_SQUARE_COLOR))
         screen.blit(text, (110, 150))
@@ -133,10 +109,27 @@ def main():
     p.init()
     screen = p.display.set_mode((BOARD_WIDTH + MOVE_LOG_PANEL_WIDTH, BOARD_HEIGHT))
     clock = p.time.Clock()
+    
+    menu = ChessMenu(BOARD_WIDTH + MOVE_LOG_PANEL_WIDTH, BOARD_HEIGHT)
+    game_mode, difficulty = menu.show_main_menu(screen)
+    
+    if game_mode is None:
+        return
         
     gs = GameState()
     if gs.playerWantsToPlayAsBlack:
         gs.board = gs.board1
+        
+    global SET_WHITE_AS_BOT, SET_BLACK_AS_BOT, DEPTH
+    if game_mode == "PVP":
+        SET_WHITE_AS_BOT = False
+        SET_BLACK_AS_BOT = False
+    else:
+        SET_WHITE_AS_BOT = False
+        SET_BLACK_AS_BOT = True
+        
+        if difficulty:
+            DEPTH = difficulty
 
     screen.fill(p.Color(LIGHT_SQUARE_COLOR))
     moveLogFont = p.font.SysFont("Times New Roman", 12, False, False)
@@ -148,10 +141,12 @@ def main():
     animate = False  
     loadImages()
     running = True
-    squareSelected = ()  
+    squareSelected = () 
     playerClicks = []
-    gameOver = False 
-    AIThinking = False  
+    gameOver = False  
+    playerWhiteHuman = not SET_WHITE_AS_BOT
+    playerBlackHuman = not SET_BLACK_AS_BOT
+    AIThinking = False 
     moveFinderProcess = None
     moveUndone = False
     pieceCaptured = False
@@ -160,6 +155,8 @@ def main():
     countMovesForDraw = 0
     COUNT_DRAW = 0
     while running:
+        humanTurn = (gs.whiteToMove and playerWhiteHuman) or (
+            not gs.whiteToMove and playerBlackHuman)
         for e in p.event.get():
             if e.type == p.QUIT:
                 running = False
@@ -167,7 +164,7 @@ def main():
                 if not gameOver:
                     location = p.mouse.get_pos()
                     col = location[0]//SQ_SIZE 
-                    row = location[1]//SQ_SIZE
+                    row = location[1]//SQ_SIZE  
                     
                     undo_button, restart_button = drawButtons(screen)
                     
@@ -179,14 +176,33 @@ def main():
                         if AIThinking:
                             moveFinderProcess.terminate()
                             AIThinking = False
-                        moveUndone = True
+                        moveUndone = True     
 
                     elif restart_button.collidepoint(location):
                         screen.fill(p.Color(LIGHT_SQUARE_COLOR))
+                        menu = ChessMenu(BOARD_WIDTH + MOVE_LOG_PANEL_WIDTH, BOARD_HEIGHT)
+                        game_mode, difficulty = menu.show_main_menu(screen)
+                        
+                        if game_mode is None:
+                            running = False
+                            break
                             
                         gs = GameState()
                         if gs.playerWantsToPlayAsBlack:
                             gs.board = gs.board1
+                            
+                        if game_mode == "PVP":
+                            SET_WHITE_AS_BOT = False
+                            SET_BLACK_AS_BOT = False
+                            playerWhiteHuman = True
+                            playerBlackHuman = True
+                        else: 
+                            SET_WHITE_AS_BOT = False
+                            SET_BLACK_AS_BOT = True
+                            playerWhiteHuman = True
+                            playerBlackHuman = False
+                            if difficulty:
+                                DEPTH = difficulty
                                 
                         validMoves = gs.getValidMoves()
                         squareSelected = ()
@@ -201,11 +217,34 @@ def main():
                         continue
                     
                     if squareSelected == (row, col) or col >= 8:
-                        squareSelected = () 
+                        squareSelected = ()  
                         playerClicks = []  
                     else:
                         squareSelected = (row, col)
                         playerClicks.append(squareSelected)
+                    if len(playerClicks) == 2 and humanTurn:
+                        move = Move(playerClicks[0], playerClicks[1], gs.board)
+                        for i in range(len(validMoves)):
+                            if move == validMoves[i]:
+                                if gs.board[validMoves[i].endRow][validMoves[i].endCol] != '--':
+                                    pieceCaptured = True
+                                gs.makeMove(validMoves[i])
+                                if (move.isPawnPromotion):
+                                    promotion_choice = pawnPromotionPopup(
+                                        screen, gs)
+                                    gs.board[move.endRow][move.endCol] = move.pieceMoved[0] + \
+                                        promotion_choice
+                                    promote_sound.play()
+                                    pieceCaptured = False
+                                if (pieceCaptured or move.isEnpassantMove):
+                                    capture_sound.play()
+                                elif not move.isPawnPromotion:
+                                    move_sound.play()
+                                pieceCaptured = False
+                                moveMade = True
+                                animate = True
+                                squareSelected = ()
+                                playerClicks = []
                         if not moveMade:
                             playerClicks = [squareSelected]
 
@@ -216,7 +255,7 @@ def main():
                     animate = False
                     gameOver = False
                     if AIThinking:
-                        moveFinderProcess.terminate()  
+                        moveFinderProcess.terminate() 
                         AIThinking = False
                     moveUndone = True
                 if e.key == p.K_r: 
@@ -228,9 +267,45 @@ def main():
                     animate = False
                     gameOver = False
                     if AIThinking:
-                        moveFinderProcess.terminate()  
+                        moveFinderProcess.terminate() 
                         AIThinking = False
                     moveUndone = True
+
+        # AI move finder
+        if not gameOver and not humanTurn and not moveUndone:
+            if not AIThinking:
+                AIThinking = True
+                returnQueue = Queue()  
+                moveFinderProcess = Process(target=findBestMove, args=(
+                    gs, validMoves, returnQueue)) 
+                moveFinderProcess.start()
+            if not moveFinderProcess.is_alive():
+                AIMove = returnQueue.get() 
+                if AIMove is None:
+                    AIMove = findRandomMoves(validMoves)
+
+                if gs.board[AIMove.endRow][AIMove.endCol] != '--':
+                    pieceCaptured = True
+
+                gs.makeMove(AIMove)
+
+                if AIMove.isPawnPromotion:
+                    promotion_choice = pawnPromotionPopup(screen, gs)
+                    gs.board[AIMove.endRow][AIMove.endCol] = AIMove.pieceMoved[0] + \
+                        promotion_choice
+                    promote_sound.play()
+                    pieceCaptured = False
+
+                if (pieceCaptured or AIMove.isEnpassantMove):
+                    capture_sound.play()
+                elif not AIMove.isPawnPromotion:
+                    move_sound.play()
+                pieceCaptured = False
+                AIThinking = False
+                moveMade = True
+                animate = True
+                squareSelected = ()
+                playerClicks = []
 
         if moveMade:
             if countMovesForDraw == 0 or countMovesForDraw == 1 or countMovesForDraw == 2 or countMovesForDraw == 3:
@@ -271,12 +346,14 @@ def main():
         clock.tick(MAX_FPS)
         p.display.flip()
 
+
 def drawGameState(screen, gs, validMoves, squareSelected, moveLogFont):
     drawSquare(screen) 
     highlightSquares(screen, gs, validMoves, squareSelected)
     drawPieces(screen, gs.board)
     drawMoveLog(screen, gs, moveLogFont)
-    return drawButtons(screen)  
+    return drawButtons(screen)
+
 
 def drawSquare(screen):
     global colors
@@ -287,8 +364,9 @@ def drawSquare(screen):
             p.draw.rect(screen, color, p.Rect(
                 col * SQ_SIZE, row * SQ_SIZE, SQ_SIZE, SQ_SIZE))
 
+
 def highlightSquares(screen, gs, validMoves, squareSelected):
-    if squareSelected != (): 
+    if squareSelected != ():
         row, col = squareSelected
         if gs.board[row][col][0] == ('w' if gs.whiteToMove else 'b'):
             s = p.Surface((SQ_SIZE, SQ_SIZE))
@@ -300,6 +378,7 @@ def highlightSquares(screen, gs, validMoves, squareSelected):
                 if move.startRow == row and move.startCol == col:
                     screen.blit(s, (move.endCol*SQ_SIZE, move.endRow*SQ_SIZE))
 
+
 def drawPieces(screen, board):
     for row in range(DIMENSION):
         for col in range(DIMENSION):
@@ -307,6 +386,7 @@ def drawPieces(screen, board):
             if piece != "--":
                 screen.blit(IMAGES[piece], p.Rect(
                     col * SQ_SIZE, row * SQ_SIZE, SQ_SIZE, SQ_SIZE))
+
 
 def drawMoveLog(screen, gs, font):
     moveLogRect = p.Rect(
@@ -322,8 +402,8 @@ def drawMoveLog(screen, gs, font):
         moveTexts.append(moveString)
 
     movesPerRow = 3
-    padding = 10
-    lineSpacing = 5
+    padding = 10 
+    lineSpacing = 5 
     textY = padding
 
     for i in range(0, len(moveTexts), movesPerRow):
@@ -343,18 +423,18 @@ def animateMove(move, screen, board, clock):
     global colors
     deltaRow = move.endRow - move.startRow
     deltaCol = move.endCol - move.startCol
-    framesPerSquare = 5
+    framesPerSquare = 5  
     frameCount = (abs(deltaRow) + abs(deltaCol)) * framesPerSquare
     for frame in range(frameCount + 1):
         row, col = ((move.startRow + deltaRow*frame/frameCount, move.startCol +
-                    deltaCol*frame/frameCount)) 
+                    deltaCol*frame/frameCount))  
         drawSquare(screen)
         drawPieces(screen, board)
 
         color = colors[(move.endRow + move.endCol) %
-                       2]
+                       2] 
         endSquare = p.Rect(move.endCol*SQ_SIZE, move.endRow *
-                           SQ_SIZE, SQ_SIZE, SQ_SIZE)
+                           SQ_SIZE, SQ_SIZE, SQ_SIZE)  
         p.draw.rect(screen, color, endSquare)
 
         if move.pieceCaptured != '--':
@@ -362,7 +442,7 @@ def animateMove(move, screen, board, clock):
                 enPassantRow = move.endRow + \
                     1 if move.pieceCaptured[0] == 'b' else move.endRow - 1
                 endSquare = p.Rect(move.endCol*SQ_SIZE, enPassantRow *
-                                   SQ_SIZE, SQ_SIZE, SQ_SIZE) 
+                                   SQ_SIZE, SQ_SIZE, SQ_SIZE)  
             screen.blit(IMAGES[move.pieceCaptured], endSquare)
 
         screen.blit(IMAGES[move.pieceMoved], p.Rect(
@@ -370,6 +450,7 @@ def animateMove(move, screen, board, clock):
 
         p.display.flip()
         clock.tick(240)
+
 
 def drawEndGameText(screen, text):
     font = p.font.SysFont("Times New Roman", 30, False, False)
@@ -385,6 +466,7 @@ def drawEndGameText(screen, text):
 
     textObject = font.render(text, 0, p.Color('Black'))
     screen.blit(textObject, textLocation.move(1, 1))
+
 
 def drawButtons(screen):
     normal_color = BUTTON_COLOR
@@ -431,6 +513,7 @@ def drawButtons(screen):
     ))
     
     return undo_button, restart_button
+
 
 if __name__ == "__main__":
     main()

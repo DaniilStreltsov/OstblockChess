@@ -1,7 +1,5 @@
 import pygame as p
 
-DEPTH = 0
-
 class ChessMenu:
     def __init__(self, width, height):
         self.width = width
@@ -91,10 +89,18 @@ class ChessMenu:
                 if e.type == p.MOUSEBUTTONDOWN:
                     mouse_pos = p.mouse.get_pos()
                     if easy_button.collidepoint(mouse_pos):
+                        with open("difficulty-config.txt", "w") as file:
+                            file.write('"difficulty": 1')
                         return 1  # 10% depth
                     elif medium_button.collidepoint(mouse_pos):
+                        with open("difficulty-config.txt", "w") as file:
+                            file.write('"difficulty": 2')
                         return 2  # 40% depth  
                     elif hard_button.collidepoint(mouse_pos):
+                        with open("difficulty-config.txt", "w") as file:
+                            file.write('"difficulty": 3')
                         return 3  # 80% depth
                     elif impossible_button.collidepoint(mouse_pos):
+                        with open("difficulty-config.txt", "w") as file:
+                            file.write('"difficulty": 4')
                         return 4  # 99% depth

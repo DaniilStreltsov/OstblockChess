@@ -1,7 +1,18 @@
 import random
 from start_positions import OpeningBook
 
-DEPTH = 4
+try:
+    with open("difficulty-config.txt", "r") as file:
+        line = file.readline().strip()
+        if line:
+            DEPTH = int(line.split(":")[1].strip())
+        else:
+            DEPTH = 1
+except (FileNotFoundError, IndexError, ValueError):
+    DEPTH = 1
+SET_WHITE_AS_BOT = -1
+print(DEPTH)
+
 pieceScore = {"K": 0, "Q": 9, "R": 5, "B": 3, "N": 3, "p": 1}
 
 knightScores = [[1, 1, 1, 1, 1, 1, 1, 1], [1, 2, 2, 2, 2, 2, 2, 1], [1, 2, 3, 3, 3, 3, 2, 1], [1, 2, 3, 4, 4, 3, 2, 1],
