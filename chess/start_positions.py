@@ -2,7 +2,7 @@ class OpeningBook:
     def __init__(self):
         self.openings = {
             "start": {
-                "moves": ["e2e4", "d2d4"],
+                "moves": ["e2e4", "d2d4", "h2h4"],
                 "names": ["King's Pawn", "Queen's Pawn"]
             },
             "e2e4": {
@@ -12,6 +12,10 @@ class OpeningBook:
             "d2d4": {
                 "moves": ["d7d5", "g8f6"],
                 "names": ["Queen's Pawn Game", "Indian Defense"]
+            },
+            "h2h4": {
+                "moves": ["g2g4"],
+                "names": ["GROB Opening"]
             }
         }
 
