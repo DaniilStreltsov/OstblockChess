@@ -10,19 +10,24 @@ p.mixer.init()
 move_sound = p.mixer.Sound("sounds/move-sound.mp3")
 capture_sound = p.mixer.Sound("sounds/capture.mp3")
 promote_sound = p.mixer.Sound("sounds/promote.mp3")
+check_sound = p.mixer.Sound("sounds/check.mp3")
+mate_sound = p.mixer.Sound("sounds/mate.mp3")  
 
-BOARD_WIDTH = BOARD_HEIGHT = 512
+BOARD_WIDTH = BOARD_HEIGHT = 700
 MOVE_LOG_PANEL_WIDTH = 250
 MOVE_LOG_PANEL_HEIGHT = BOARD_HEIGHT
 DIMENSION = 8
 SQ_SIZE = BOARD_HEIGHT // DIMENSION
-MAX_FPS = 15
+MAX_FPS = 60
 IMAGES = {}
+
+SEPARATOR_COLOR = (0, 0, 0) 
+SEPARATOR_WIDTH = 5
 
 BUTTON_WIDTH = 100
 BUTTON_HEIGHT = 40
 BUTTON_MARGIN = 10
-BUTTON_COLOR = (119, 153, 82)
+BUTTON_COLOR = (128, 128, 128)
 BUTTON_TEXT_COLOR = (255, 255, 255)
 
 global SET_WHITE_AS_BOT, SET_BLACK_AS_BOT, DEPTH
@@ -30,8 +35,8 @@ global SET_WHITE_AS_BOT, SET_BLACK_AS_BOT, DEPTH
 SET_WHITE_AS_BOT = False
 SET_BLACK_AS_BOT = True
 
-LIGHT_SQUARE_COLOR = (237, 238, 209)
-DARK_SQUARE_COLOR = (119, 153, 82)
+LIGHT_SQUARE_COLOR = (255, 255, 255)
+DARK_SQUARE_COLOR = (128, 128, 128)
 MOVE_HIGHLIGHT_COLOR = (84, 115, 161)
 POSSIBLE_MOVE_COLOR = (255, 255, 51)
 
@@ -46,7 +51,7 @@ def loadImages():
 
 
 def pawnPromotionPopup(screen, gs):
-    font = p.font.SysFont("Times New Roman", 30, False, False)
+    font = p.font.Font("font/soviet.ttf", 30)
     text = font.render("Choose promotion:", True, p.Color("black"))
 
     button_width, button_height = 100, 100
@@ -361,8 +366,15 @@ def drawGameState(screen, gs, validMoves, squareSelected, moveLogFont):
     drawSquare(screen) 
     highlightSquares(screen, gs, validMoves, squareSelected)
     drawPieces(screen, gs.board)
+
     drawMoveLog(screen, gs, moveLogFont)
-    return drawButtons(screen)
+    undo_button, restart_button = drawButtons(screen)
+    p.draw.line(screen, 
+                SEPARATOR_COLOR,
+                (BOARD_WIDTH - SEPARATOR_WIDTH // 2, 0),  # Start point
+                (BOARD_WIDTH - SEPARATOR_WIDTH // 2, BOARD_HEIGHT),  # End point
+                SEPARATOR_WIDTH)
+    return undo_button, restart_button
 
 
 def drawSquare(screen):
@@ -480,12 +492,12 @@ def drawEndGameText(screen, text):
 
 def drawButtons(screen):
     normal_color = BUTTON_COLOR
-    hover_color = (82, 110, 57)  
+    hover_color = (69, 70, 76)  
     
     mouse_pos = p.mouse.get_pos()
     
     undo_button = p.Rect(
-        BOARD_WIDTH + MOVE_LOG_PANEL_WIDTH - (BUTTON_WIDTH * 2 + BUTTON_MARGIN), 
+        BOARD_WIDTH + MOVE_LOG_PANEL_WIDTH - (BUTTON_WIDTH * 2 + BUTTON_MARGIN * 2), 
         BOARD_HEIGHT - (BUTTON_HEIGHT + BUTTON_MARGIN),
         BUTTON_WIDTH, 
         BUTTON_HEIGHT
@@ -504,7 +516,7 @@ def drawButtons(screen):
     p.draw.rect(screen, undo_color, undo_button, border_radius=10)
     p.draw.rect(screen, restart_color, restart_button, border_radius=10)
     
-    font = p.font.SysFont("Times New Roman", 20, False, False)
+    font = p.font.Font("font/soviet.ttf", 15)
     undo_text = font.render("Undo", True, BUTTON_TEXT_COLOR)
     restart_text = font.render("Restart", True, BUTTON_TEXT_COLOR)
     
