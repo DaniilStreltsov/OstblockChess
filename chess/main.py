@@ -123,13 +123,13 @@ def main():
     
     gs = GameState()
 
-    if game_mode == "FISCHER":
+    if "FISCHER" in game_mode:
         gs.set_game_mode("FISCHER")
     elif gs.playerWantsToPlayAsBlack:
         gs.board = gs.board1
         
     global SET_WHITE_AS_BOT, SET_BLACK_AS_BOT, DEPTH
-    if game_mode == "PVP":
+    if "PVP" in game_mode:
         SET_WHITE_AS_BOT = False
         SET_BLACK_AS_BOT = False
     else:
@@ -195,18 +195,18 @@ def main():
                             break
                             
                         gs = GameState()
-                        if game_mode == "FISCHER_PVP":
+                        if "FISCHER" and "PVP" in game_mode:
                             gs.set_game_mode("FISCHER")
                             SET_WHITE_AS_BOT = False
                             SET_BLACK_AS_BOT = False
                             playerWhiteHuman = True
                             playerBlackHuman = True
-                        elif game_mode == "FISCHER":
+                        elif "FISCHER" in game_mode:
                             gs.set_game_mode("FISCHER")
                         elif gs.playerWantsToPlayAsBlack:
                             gs.board = gs.board1
                             
-                        if game_mode == "PVP":
+                        if "PVP" in game_mode:
                             SET_WHITE_AS_BOT = False
                             SET_BLACK_AS_BOT = False
                             playerWhiteHuman = True
@@ -306,12 +306,11 @@ def main():
 
                 if AIMove.isPawnPromotion:
                     promotion_choice = pawnPromotionPopup(screen, gs)
-                    gs.board[AIMove.endRow][AIMove.endCol] = AIMove.pieceMoved[0] + \
-                        promotion_choice
+                    gs.board[AIMove.endRow][AIMove.endCol] = AIMove.pieceMoved[0] + promotion_choice
                     promote_sound.play()
                     pieceCaptured = False
 
-                if (pieceCaptured or AIMove.isEnpassantMove):
+                if pieceCaptured or AIMove.isEnpassantMove:
                     capture_sound.play()
                 elif not AIMove.isPawnPromotion:
                     move_sound.play()
