@@ -10,8 +10,8 @@ p.mixer.init()
 move_sound = p.mixer.Sound("sounds/move-sound.mp3")
 capture_sound = p.mixer.Sound("sounds/capture.mp3")
 promote_sound = p.mixer.Sound("sounds/promote.mp3")
-# check_sound = p.mixer.Sound("sounds/check.mp3")
-# mate_sound = p.mixer.Sound("sounds/mate.mp3")  
+check_sound = p.mixer.Sound("sounds/check.mp3")
+mate_sound = p.mixer.Sound("sounds/mate.mp3")  
 
 BOARD_WIDTH = BOARD_HEIGHT = 700
 MOVE_LOG_PANEL_WIDTH = 250
@@ -110,6 +110,15 @@ def pawnPromotionPopup(screen, gs):
 
         p.display.flip()
 
+def stop_music(menu):
+    menu.stop_music()
+
+def play_mate_sound():
+    mate_sound.play()
+
+def play_check_sound():
+    check_sound.play()
+
 def main():
     p.init()
     screen = p.display.set_mode((BOARD_WIDTH + MOVE_LOG_PANEL_WIDTH, BOARD_HEIGHT))
@@ -161,6 +170,9 @@ def main():
     previousPos = ""
     countMovesForDraw = 0
     COUNT_DRAW = 0
+
+    stop_music(menu)
+
     while running:
         humanTurn = (gs.whiteToMove and playerWhiteHuman) or (
             not gs.whiteToMove and playerBlackHuman)
@@ -195,6 +207,7 @@ def main():
                             break
                             
                         gs = GameState()
+
                         if "FISCHER" and "PVP" in game_mode:
                             gs.set_game_mode("FISCHER")
                             SET_WHITE_AS_BOT = False
@@ -342,6 +355,11 @@ def main():
             animate = False
             moveUndone = False
 
+            inCheck = gs.inCheck
+
+            if inCheck:
+                play_check_sound()
+
         undo_button, restart_button = drawGameState(screen, gs, validMoves, squareSelected, moveLogFont)
 
         if COUNT_DRAW == 1:
@@ -355,6 +373,7 @@ def main():
         elif gs.checkmate:
             gameOver = True
             text = 'Black wins by checkmate' if gs.whiteToMove else 'White wins by checkmate'
+            play_mate_sound()
             drawEndGameText(screen, text)
 
         clock.tick(MAX_FPS)

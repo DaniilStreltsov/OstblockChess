@@ -208,3 +208,6 @@ class ChessMenu:
                             with open("difficulty-config.txt", "w") as file:
                                 file.write(f'"difficulty": {difficulties_config[i]}')
                             return i + 1
+
+    def stop_music(self):
+            p.mixer.music.stop()
