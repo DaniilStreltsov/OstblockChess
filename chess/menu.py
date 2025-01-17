@@ -151,7 +151,7 @@ class ChessMenu:
                         for i, rect in enumerate(button_rects):
                             if rect.collidepoint(mouse_pos):
                                 options = ["PVP", "PVAI", "FISCHER", "FISCHER_PVP"]
-                                if i == 1:  # "Player vs AI" needs difficulty menu
+                                if i == 1 or i == 2:  # "Player vs AI" needs difficulty menu
                                     return options[i], self.show_difficulty_menu(screen)
                                 return options[i], None
                             
