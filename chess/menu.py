@@ -1,10 +1,22 @@
 import pygame as p
+from PIL import Image
 
 p.mixer.init()
 p.mixer.music.load("sounds/dep.mp3")  # Replace with the path to your file
 p.mixer.music.play(-1) 
 p.mixer.music.set_volume(0.2)
 music_muted = False
+
+# Load the GIF and extract frames
+gif_path = "images1/background.gif"
+gif = Image.open(gif_path)
+frames = []
+screen_size = (1000, 700)  # Set your screen size here
+for frame in range(gif.n_frames):
+    gif.seek(frame)
+    frame_image = gif.resize(screen_size, Image.LANCZOS)
+    frame_surface = p.image.fromstring(frame_image.convert("RGBA").tobytes(), frame_image.size, "RGBA")
+    frames.append(frame_surface)
 
 class ChessMenu:
     def __init__(self, width, height):
@@ -41,12 +53,10 @@ class ChessMenu:
         p.draw.rect(screen, button_color, button_rect)
 
         # Center text within the button
-        text_x = x
-        text_y = y + (button_rect.height - text_height) // 2
+        screen.blit(text_surface, (x, y + 10))
 
-        screen.blit(text_surface, (text_x, text_y))
         return button_rect
-    
+
     def draw_Mute_button(self, screen):
         help_text = "Mute music"
         text_surface = self.font.render(help_text, True, self.text_color)
@@ -112,12 +122,18 @@ class ChessMenu:
             screen.blit(text, (x, y))
             y += 40
     
-    
-
     def show_main_menu(self, screen):
         running = True
+        frame_index = 0
+        clock = p.time.Clock()
+
         while running:
-            screen.fill(self.bg_color)
+            # Clear the screen with a solid color
+            screen.fill((0, 0, 0))  # Fill with black or any other background color
+
+            # Draw the current frame of the background image
+            screen.blit(frames[frame_index], (0, 0))
+            frame_index = (frame_index + 1) % len(frames)
 
             # Draw title in a large font, centered
             self.drawText(screen, "OSTblock ChEsS", 100, 70)
@@ -154,7 +170,7 @@ class ChessMenu:
                                 if i == 1 or i == 2:  # "Player vs AI" needs difficulty menu
                                     return options[i], self.show_difficulty_menu(screen)
                                 return options[i], None
-                            
+                        
             mouse_pos = p.mouse.get_pos()
 
             # Redraw buttons with hover effects
@@ -167,6 +183,7 @@ class ChessMenu:
                 self.show_overlay(screen)
 
             p.display.flip()
+            clock.tick(10)  # Adjust the frame rate as needed
 
     def show_difficulty_menu(self, screen):
         screen.fill(self.bg_color)
