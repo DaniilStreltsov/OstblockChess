@@ -10,8 +10,8 @@ p.mixer.init()
 move_sound = p.mixer.Sound("sounds/move-sound.mp3")
 capture_sound = p.mixer.Sound("sounds/capture.mp3")
 promote_sound = p.mixer.Sound("sounds/promote.mp3")
-check_sound = p.mixer.Sound("sounds/check.mp3")
-mate_sound = p.mixer.Sound("sounds/mate.mp3")  
+# check_sound = p.mixer.Sound("sounds/check.mp3")
+# mate_sound = p.mixer.Sound("sounds/mate.mp3")  
 
 BOARD_WIDTH = BOARD_HEIGHT = 700
 MOVE_LOG_PANEL_WIDTH = 250
