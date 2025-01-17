@@ -168,7 +168,7 @@ class ChessMenu:
                             if rect.collidepoint(mouse_pos):
                                 options = ["PVP", "PVAI", "FISCHER", "FISCHER_PVP"]
                                 if i == 1 or i == 2:  # "Player vs AI" needs difficulty menu
-                                    return options[i], self.show_difficulty_menu(screen)
+                                    return options[i], self.show_difficulty_menu(screen, frame_index)
                                 return options[i], None
                         
             mouse_pos = p.mouse.get_pos()
@@ -185,27 +185,34 @@ class ChessMenu:
             p.display.flip()
             clock.tick(10)  # Adjust the frame rate as needed
 
-    def show_difficulty_menu(self, screen):
-        screen.fill(self.bg_color)
-
-        # Draw title in a large font, centered
-        self.drawText(screen, "Choose slozhnostt'", 100, 50)
-
-        # Draw difficulty buttons
-        difficulties = [
-            ("easи", 200),
-            ("mediум", 270),
-            ("harд", 340),
-            ("impoссiбlе", 410),
-        ]
-        button_rects = []
-
-        for text, y in difficulties:
-            button_rects.append(self.drawText(screen, text, y, 30))
-
-        p.display.flip()
+    def show_difficulty_menu(self, screen, frame_index):
+        clock = p.time.Clock()
 
         while True:
+            # Clear the screen with a solid color
+            screen.fill((0, 0, 0))  # Fill with black or any other background color
+
+            # Draw the current frame of the background image
+            screen.blit(frames[frame_index], (0, 0))
+            frame_index = (frame_index + 1) % len(frames)
+
+            # Draw title in a large font, centered
+            self.drawText(screen, "Choose slozhnostt'", 100, 50)
+
+            # Draw difficulty buttons
+            difficulties = [
+                ("easи", 200),
+                ("mediум", 270),
+                ("harд", 340),
+                ("impoссiбlе", 410),
+            ]
+            button_rects = []
+
+            for text, y in difficulties:
+                button_rects.append(self.drawText(screen, text, y, 30))
+
+            p.display.flip()
+
             mouse_pos = p.mouse.get_pos()
 
             # Update hover states
@@ -226,5 +233,7 @@ class ChessMenu:
                                 file.write(f'"difficulty": {difficulties_config[i]}')
                             return i + 1
 
+            clock.tick(10)  # Adjust the frame rate as needed
+
     def stop_music(self):
-            p.mixer.music.stop()
+        p.mixer.music.stop()
