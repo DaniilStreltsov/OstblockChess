@@ -27,6 +27,8 @@ class ChessMenu:
         screen.blit(text_surface, (text_x, text_y))
         return button_rect
 
+# In menu.py, modify show_main_menu()
+
     def show_main_menu(self, screen):
         screen.fill(self.bg_color)
         
@@ -37,12 +39,18 @@ class ChessMenu:
         # Store button states
         pvp_hover = False
         pvai_hover = False
+        fischer_hover = False
+        fischer_pvp_hover = False
         
         # Initial button draw
         pvp_button = self.drawText(screen, "Player vs Player", 
-                                 self.width//2 - 120, 250, 30, pvp_hover)
+                                self.width//2 - 120, 250, 30, pvp_hover)
         pvai_button = self.drawText(screen, "Player vs AI", 
-                                  self.width//2 - 120, 320, 30, pvai_hover)
+                                self.width//2 - 120, 320, 30, pvai_hover)
+        fischer_button = self.drawText(screen, "Fischer Random", 
+                                    self.width//2 - 120, 390, 30, fischer_hover)
+        fischer_pvp_button = self.drawText(screen, "Fischer Random PvP", 
+                                    self.width//2 - 120, 460, 30, fischer_pvp_hover)
         
         while True:
             mouse_pos = p.mouse.get_pos()
@@ -50,12 +58,18 @@ class ChessMenu:
             # Check hover states
             pvp_hover = pvp_button.collidepoint(mouse_pos)
             pvai_hover = pvai_button.collidepoint(mouse_pos)
+            fischer_hover = fischer_button.collidepoint(mouse_pos)
+            fischer_pvp_hover = fischer_pvp_button.collidepoint(mouse_pos)
             
             # Redraw buttons with hover effects
             pvp_button = self.drawText(screen, "Player vs Player", 
-                                     self.width//2 - 120, 250, 30, pvp_hover)
+                                    self.width//2 - 120, 250, 30, pvp_hover)
             pvai_button = self.drawText(screen, "Player vs AI", 
-                                      self.width//2 - 120, 320, 30, pvai_hover)
+                                    self.width//2 - 120, 320, 30, pvai_hover)
+            fischer_button = self.drawText(screen, "Fischer Random", 
+                                        self.width//2 - 120, 390, 30, fischer_hover)
+            fischer_pvp_button = self.drawText(screen, "Fischer Random PvP", 
+                                        self.width//2 - 120, 460, 30, fischer_pvp_hover)
             
             p.display.flip()
             
@@ -67,6 +81,10 @@ class ChessMenu:
                         return "PVP", None
                     elif pvai_button.collidepoint(mouse_pos):
                         return "PVAI", self.show_difficulty_menu(screen)
+                    elif fischer_button.collidepoint(mouse_pos):
+                        return "FISCHER", None
+                    elif fischer_pvp_button.collidepoint(mouse_pos):
+                        return "FISCHER_PVP", None
 
     def show_difficulty_menu(self, screen):
         screen.fill(self.bg_color)

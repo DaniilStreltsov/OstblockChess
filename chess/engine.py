@@ -1,5 +1,8 @@
+import random
+
 class GameState():
     def __init__(self):
+        self.game_mode = "STANDARD"
         self.board = [
             ['bR', 'bN', 'bB', 'bQ', 'bK', 'bB', 'bN', 'bR'],
             ['bp', 'bp', 'bp', 'bp', 'bp', 'bp', 'bp', 'bp'],
@@ -22,6 +25,7 @@ class GameState():
 
         self.moveFunctions = {'p': self.getPawnMoves, 'R': self.getRookMoves, 'N': self.getKnightMoves,
                               'B': self.getBishopMoves, 'Q': self.getQueenMoves, 'K': self.getKingMoves}
+        self.game_mode = "STANDARD"  # Default game mode
         self.whiteToMove = True
         self.playerWantsToPlayAsBlack = False
         self.moveLog = []
@@ -46,6 +50,72 @@ class GameState():
         self.castleRightsLog = [castleRights(
             self.whiteCastleKingside, self.whiteCastleQueenside, self.blackCastleKingside, self.blackCastleQueenside)]
         
+        if self.game_mode == "FISCHER":
+            self.board = self.generate_fischer_position()
+        else:
+            self.board = [
+                ['bR', 'bN', 'bB', 'bQ', 'bK', 'bB', 'bN', 'bR'],
+                ['bp', 'bp', 'bp', 'bp', 'bp', 'bp', 'bp', 'bp'],
+                ['--', '--', '--', '--', '--', '--', '--', '--'],
+                ['--', '--', '--', '--', '--', '--', '--', '--'],
+                ['--', '--', '--', '--', '--', '--', '--', '--'],
+                ['--', '--', '--', '--', '--', '--', '--', '--'],
+                ['wp', 'wp', 'wp', 'wp', 'wp', 'wp', 'wp', 'wp'],
+                ['wR', 'wN', 'wB', 'wQ', 'wK', 'wB', 'wN', 'wR']]
+        
+    def set_game_mode(self, game_mode):
+        self.game_mode = game_mode
+        if self.game_mode == "FISCHER":
+            self.board = self.generate_fischer_position()
+        
+    def generate_fischer_position(self):
+        # Initialize empty back rank
+        back_rank = ['--'] * 8
+        
+        # Place bishops on opposite colors
+        first_bishop = random.randrange(0, 8, 2)  # Even squares
+        second_bishop = random.randrange(1, 8, 2)  # Odd squares
+        back_rank[first_bishop] = 'B'
+        back_rank[second_bishop] = 'B'
+        
+        # Place queen on remaining square
+        empty_squares = [i for i in range(8) if back_rank[i] == '--']
+        queen_square = random.choice(empty_squares)
+        back_rank[queen_square] = 'Q'
+        
+        # Place knights on remaining squares
+        empty_squares = [i for i in range(8) if back_rank[i] == '--']
+        for _ in range(2):
+            knight_square = random.choice(empty_squares)
+            back_rank[knight_square] = 'N'
+            empty_squares.remove(knight_square)
+            
+        # Place rooks and king
+        # King must be between rooks
+        empty_squares = [i for i in range(8) if back_rank[i] == '--']
+        back_rank[empty_squares[0]] = 'R'
+        back_rank[empty_squares[1]] = 'K'
+        back_rank[empty_squares[2]] = 'R'
+        
+        # Create full board with the generated back rank
+        board = [
+            ['b' + piece for piece in back_rank],
+            ['bp'] * 8,
+            ['--'] * 8,
+            ['--'] * 8,
+            ['--'] * 8,
+            ['--'] * 8,
+            ['wp'] * 8,
+            ['w' + piece for piece in back_rank]
+        ]
+
+        # Update king locations based on the generated position
+        king_col = back_rank.index('K')
+        self.whiteKinglocation = (7, king_col)
+        self.blackKinglocation = (0, king_col)
+        
+        return board
+    
     def makeMove(self, move):
         self.board[move.startRow][move.startCol] = "--"
         self.board[move.endRow][move.endCol] = move.pieceMoved

@@ -112,12 +112,15 @@ def main():
     
     menu = ChessMenu(BOARD_WIDTH + MOVE_LOG_PANEL_WIDTH, BOARD_HEIGHT)
     game_mode, difficulty = menu.show_main_menu(screen)
-    
+
     if game_mode is None:
         return
-        
+    
     gs = GameState()
-    if gs.playerWantsToPlayAsBlack:
+
+    if game_mode == "FISCHER":
+        gs.set_game_mode("FISCHER")
+    elif gs.playerWantsToPlayAsBlack:
         gs.board = gs.board1
         
     global SET_WHITE_AS_BOT, SET_BLACK_AS_BOT, DEPTH
@@ -133,7 +136,6 @@ def main():
 
     screen.fill(p.Color(LIGHT_SQUARE_COLOR))
     moveLogFont = p.font.SysFont("Times New Roman", 12, False, False)
-    gs = GameState()
     if (gs.playerWantsToPlayAsBlack):
         gs.board = gs.board1
     validMoves = gs.getValidMoves()
@@ -141,7 +143,7 @@ def main():
     animate = False  
     loadImages()
     running = True
-    squareSelected = () 
+    squareSelected = ()
     playerClicks = []
     gameOver = False  
     playerWhiteHuman = not SET_WHITE_AS_BOT
@@ -188,7 +190,15 @@ def main():
                             break
                             
                         gs = GameState()
-                        if gs.playerWantsToPlayAsBlack:
+                        if game_mode == "FISCHER_PVP":
+                            gs.set_game_mode("FISCHER")
+                            SET_WHITE_AS_BOT = False
+                            SET_BLACK_AS_BOT = False
+                            playerWhiteHuman = True
+                            playerBlackHuman = True
+                        elif game_mode == "FISCHER":
+                            gs.set_game_mode("FISCHER")
+                        elif gs.playerWantsToPlayAsBlack:
                             gs.board = gs.board1
                             
                         if game_mode == "PVP":
