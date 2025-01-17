@@ -12,6 +12,7 @@ capture_sound = p.mixer.Sound("sounds/capture.mp3")
 promote_sound = p.mixer.Sound("sounds/promote.mp3")
 check_sound = p.mixer.Sound("sounds/check.mp3")
 mate_sound = p.mixer.Sound("sounds/mate.mp3")  
+mate_sound.set_volume(0.2)
 
 BOARD_WIDTH = BOARD_HEIGHT = 700
 MOVE_LOG_PANEL_WIDTH = 250
@@ -364,7 +365,7 @@ def main():
 
         if COUNT_DRAW == 1:
             gameOver = True
-            text = 'Draw due to repetition'
+            text = 'Draw'
             drawEndGameText(screen, text)
         if gs.stalemate:
             gameOver = True
@@ -493,7 +494,7 @@ def animateMove(move, screen, board, clock):
 
 
 def drawEndGameText(screen, text):
-    font = p.font.SysFont("Times New Roman", 30, False, False)
+    font = p.font.Font("font/soviet.ttf", 30)
     textObject = font.render(text, True, p.Color('black'))
 
     text_width = textObject.get_width()
