@@ -56,32 +56,28 @@ def pawnPromotionPopup(screen, gs):
     text = font.render("Choose promotion:", True, p.Color("black"))
 
     button_width, button_height = 100, 100
+    screen_width, screen_height = screen.get_size()
+    text_x = (screen_width - text.get_width()) // 2
+    text_y = (screen_height - text.get_height()) // 2 - 100
+
     buttons = [
-        p.Rect(100, 200, button_width, button_height),
-        p.Rect(200, 200, button_width, button_height),
-        p.Rect(300, 200, button_width, button_height),
-        p.Rect(400, 200, button_width, button_height)
+        p.Rect((screen_width - button_width * 4) // 2 + i * (button_width + 10), text_y + 100, button_width, button_height)
+        for i in range(4)
     ]
 
     if gs.whiteToMove:
         button_images = [
-            p.transform.smoothscale(p.image.load(
-                "images1/bQ.png"), (100, 100)),
-            p.transform.smoothscale(p.image.load(
-                "images1/bR.png"), (100, 100)),
-            p.transform.smoothscale(p.image.load(
-                "images1/bB.png"), (100, 100)),
-            p.transform.smoothscale(p.image.load("images1/bN.png"), (100, 100))
+            p.transform.smoothscale(p.image.load("images1/wQ.png"), (button_width, button_height)),
+            p.transform.smoothscale(p.image.load("images1/wR.png"), (button_width, button_height)),
+            p.transform.smoothscale(p.image.load("images1/wB.png"), (button_width, button_height)),
+            p.transform.smoothscale(p.image.load("images1/wN.png"), (button_width, button_height))
         ]
     else:
         button_images = [
-            p.transform.smoothscale(p.image.load(
-                "images1/wQ.png"), (100, 100)),
-            p.transform.smoothscale(p.image.load(
-                "images1/wR.png"), (100, 100)),
-            p.transform.smoothscale(p.image.load(
-                "images1/wB.png"), (100, 100)),
-            p.transform.smoothscale(p.image.load("images1/wN.png"), (100, 100))
+            p.transform.smoothscale(p.image.load("images1/bQ.png"), (button_width, button_height)),
+            p.transform.smoothscale(p.image.load("images1/bR.png"), (button_width, button_height)),
+            p.transform.smoothscale(p.image.load("images1/bB.png"), (button_width, button_height)),
+            p.transform.smoothscale(p.image.load("images1/bN.png"), (button_width, button_height))
         ]
 
     while True:
@@ -94,7 +90,7 @@ def pawnPromotionPopup(screen, gs):
                 for i, button in enumerate(buttons):
                     if button.collidepoint(mouse_pos):
                         if i == 0:
-                            return "Q" 
+                            return "Q"
                         elif i == 1:
                             return "R"
                         elif i == 2:
@@ -103,7 +99,7 @@ def pawnPromotionPopup(screen, gs):
                             return "N"
 
         screen.fill(p.Color(LIGHT_SQUARE_COLOR))
-        screen.blit(text, (110, 150))
+        screen.blit(text, (text_x, text_y))
 
         for i, button in enumerate(buttons):
             p.draw.rect(screen, p.Color("white"), button)
