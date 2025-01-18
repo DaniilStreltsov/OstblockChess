@@ -229,6 +229,17 @@ def main():
                             playerBlackHuman = False
                             if difficulty:
                                 DEPTH = difficulty
+                        
+                        if "PVP" in game_mode:
+                            SET_WHITE_AS_BOT = False
+                            SET_BLACK_AS_BOT = False
+                            playerWhiteHuman = True
+                            playerBlackHuman = True
+                        else:
+                            SET_WHITE_AS_BOT = False
+                            SET_BLACK_AS_BOT = True
+                            playerWhiteHuman = True
+                            playerBlackHuman = False
 
                         validMoves = gs.getValidMoves()
                         squareSelected = ()
