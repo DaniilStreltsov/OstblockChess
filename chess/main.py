@@ -135,8 +135,8 @@ def main():
 
     if "FISCHER" in game_mode:
         gs.set_game_mode("FISCHER")
-    elif gs.playerWantsToPlayAsBlack:
-        gs.board = gs.board1
+    else:
+        gs.set_game_mode("STANDARD")
         
     global SET_WHITE_AS_BOT, SET_BLACK_AS_BOT, DEPTH
     if "PVP" in game_mode:
@@ -206,33 +206,30 @@ def main():
                         if game_mode is None:
                             running = False
                             break
-                            
+
                         gs = GameState()
 
-                        if "FISCHER" and "PVP" in game_mode:
+                        if "FISCHER" in game_mode:
                             gs.set_game_mode("FISCHER")
                             SET_WHITE_AS_BOT = False
                             SET_BLACK_AS_BOT = False
                             playerWhiteHuman = True
                             playerBlackHuman = True
-                        elif "FISCHER" in game_mode:
-                            gs.set_game_mode("FISCHER")
-                        elif gs.playerWantsToPlayAsBlack:
-                            gs.board = gs.board1
-                            
-                        if "PVP" in game_mode:
+                        elif "PVP" in game_mode:
+                            gs.set_game_mode("STANDARD")
                             SET_WHITE_AS_BOT = False
                             SET_BLACK_AS_BOT = False
                             playerWhiteHuman = True
                             playerBlackHuman = True
-                        else: 
+                        else:
+                            gs.set_game_mode("STANDARD")
                             SET_WHITE_AS_BOT = False
                             SET_BLACK_AS_BOT = True
                             playerWhiteHuman = True
                             playerBlackHuman = False
                             if difficulty:
                                 DEPTH = difficulty
-                                
+
                         validMoves = gs.getValidMoves()
                         squareSelected = ()
                         playerClicks = []
