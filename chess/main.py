@@ -148,6 +148,9 @@ def main():
         
         if difficulty:
             DEPTH = difficulty
+    
+    stop_music(menu)
+    p.mixer.music.stop()
 
     screen.fill(p.Color(LIGHT_SQUARE_COLOR))
     moveLogFont = p.font.SysFont("Times New Roman", 12, False, False)
@@ -171,8 +174,6 @@ def main():
     previousPos = ""
     countMovesForDraw = 0
     COUNT_DRAW = 0
-
-    stop_music(menu)
 
     while running:
         humanTurn = (gs.whiteToMove and playerWhiteHuman) or (
@@ -292,6 +293,8 @@ def main():
                     animate = False
                     gameOver = False
                     if AIThinking:
+                        p.mixer.music.stop()
+                        stop_music(menu)
                         moveFinderProcess.terminate() 
                         AIThinking = False
                     moveUndone = True
@@ -310,7 +313,11 @@ def main():
 
         # AI move finder
         if not gameOver and not humanTurn and not moveUndone:
+            p.mixer.music.stop()
+            stop_music(menu)
             if not AIThinking:
+                p.mixer.music.stop()
+                stop_music(menu)
                 AIThinking = True
                 returnQueue = Queue()  
                 moveFinderProcess = Process(target=findBestMove, args=(
@@ -327,6 +334,8 @@ def main():
                 gs.makeMove(AIMove)
 
                 if AIMove.isPawnPromotion:
+                    p.mixer.music.stop()
+                    stop_music(menu)
                     promotion_choice = pawnPromotionPopup(screen, gs)
                     gs.board[AIMove.endRow][AIMove.endCol] = AIMove.pieceMoved[0] + promotion_choice
                     promote_sound.play()

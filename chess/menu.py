@@ -236,4 +236,5 @@ class ChessMenu:
             clock.tick(10)  # Adjust the frame rate as needed
 
     def stop_music(self):
+        p.mixer.music.set_volume(0)
         p.mixer.music.stop()
