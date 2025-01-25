@@ -116,6 +116,10 @@ def play_mate_sound():
 def play_check_sound():
     check_sound.play()
 
+def stop_mate_music():
+    mate_sound.set_volume(0)
+    mate_sound.stop()
+
 def main():
     p.init()
     screen = p.display.set_mode((BOARD_WIDTH + MOVE_LOG_PANEL_WIDTH, BOARD_HEIGHT))
@@ -178,13 +182,69 @@ def main():
             if e.type == p.QUIT:
                 running = False
             elif e.type == p.MOUSEBUTTONDOWN:
+                location = p.mouse.get_pos()
+                col = location[0]//SQ_SIZE 
+                row = location[1]//SQ_SIZE  
+                
+                undo_button, restart_button = drawButtons(screen)
+                
+                if restart_button.collidepoint(location):
+                    screen.fill(p.Color(LIGHT_SQUARE_COLOR))
+                    menu = ChessMenu(BOARD_WIDTH + MOVE_LOG_PANEL_WIDTH, BOARD_HEIGHT)
+                    stop_mate_music()
+                    game_mode, difficulty = menu.show_main_menu(screen)
+                    
+                    if game_mode is None:
+                        running = False
+                        break
+
+                    gs = GameState()
+
+                    if "FISCHER" in game_mode:
+                        gs.set_game_mode("FISCHER")
+                        SET_WHITE_AS_BOT = False
+                        SET_BLACK_AS_BOT = False
+                        playerWhiteHuman = True
+                        playerBlackHuman = True
+                    elif "PVP" in game_mode:
+                        gs.set_game_mode("STANDARD")
+                        SET_WHITE_AS_BOT = False
+                        SET_BLACK_AS_BOT = False
+                        playerWhiteHuman = True
+                        playerBlackHuman = True
+                    else:
+                        gs.set_game_mode("STANDARD")
+                        SET_WHITE_AS_BOT = False
+                        SET_BLACK_AS_BOT = True
+                        playerWhiteHuman = True
+                        playerBlackHuman = False
+                        if difficulty:
+                            DEPTH = difficulty
+                    
+                    if "PVP" in game_mode:
+                        SET_WHITE_AS_BOT = False
+                        SET_BLACK_AS_BOT = False
+                        playerWhiteHuman = True
+                        playerBlackHuman = True
+                    else:
+                        SET_WHITE_AS_BOT = False
+                        SET_BLACK_AS_BOT = True
+                        playerWhiteHuman = True
+                        playerBlackHuman = False
+
+                    validMoves = gs.getValidMoves()
+                    squareSelected = ()
+                    playerClicks = []
+                    moveMade = False
+                    animate = False
+                    gameOver = False
+                    if AIThinking:
+                        moveFinderProcess.terminate()
+                        AIThinking = False
+                    moveUndone = True
+                    continue
+                
                 if not gameOver:
-                    location = p.mouse.get_pos()
-                    col = location[0]//SQ_SIZE 
-                    row = location[1]//SQ_SIZE  
-                    
-                    undo_button, restart_button = drawButtons(screen)
-                    
                     if undo_button.collidepoint(location):
                         gs.undoMove()
                         moveMade = True
@@ -195,61 +255,6 @@ def main():
                             AIThinking = False
                         moveUndone = True     
 
-                    elif restart_button.collidepoint(location):
-                        screen.fill(p.Color(LIGHT_SQUARE_COLOR))
-                        menu = ChessMenu(BOARD_WIDTH + MOVE_LOG_PANEL_WIDTH, BOARD_HEIGHT)
-                        game_mode, difficulty = menu.show_main_menu(screen)
-                        
-                        if game_mode is None:
-                            running = False
-                            break
-
-                        gs = GameState()
-
-                        if "FISCHER" in game_mode:
-                            gs.set_game_mode("FISCHER")
-                            SET_WHITE_AS_BOT = False
-                            SET_BLACK_AS_BOT = False
-                            playerWhiteHuman = True
-                            playerBlackHuman = True
-                        elif "PVP" in game_mode:
-                            gs.set_game_mode("STANDARD")
-                            SET_WHITE_AS_BOT = False
-                            SET_BLACK_AS_BOT = False
-                            playerWhiteHuman = True
-                            playerBlackHuman = True
-                        else:
-                            gs.set_game_mode("STANDARD")
-                            SET_WHITE_AS_BOT = False
-                            SET_BLACK_AS_BOT = True
-                            playerWhiteHuman = True
-                            playerBlackHuman = False
-                            if difficulty:
-                                DEPTH = difficulty
-                        
-                        if "PVP" in game_mode:
-                            SET_WHITE_AS_BOT = False
-                            SET_BLACK_AS_BOT = False
-                            playerWhiteHuman = True
-                            playerBlackHuman = True
-                        else:
-                            SET_WHITE_AS_BOT = False
-                            SET_BLACK_AS_BOT = True
-                            playerWhiteHuman = True
-                            playerBlackHuman = False
-
-                        validMoves = gs.getValidMoves()
-                        squareSelected = ()
-                        playerClicks = []
-                        moveMade = False
-                        animate = False
-                        gameOver = False
-                        if AIThinking:
-                            moveFinderProcess.terminate()
-                            AIThinking = False
-                        moveUndone = True
-                        continue
-                    
                     if squareSelected == (row, col) or col >= 8:
                         squareSelected = ()  
                         playerClicks = []  
